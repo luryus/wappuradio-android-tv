@@ -21,7 +21,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.LongState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -111,10 +114,16 @@ class MainActivity : ComponentActivity() {
 
 data class StreamDetails(val url: String)
 
+@Composable
+fun PlayTimeText(time: LongState) {
+    val formattedTime by remember { derivedStateOf { formatTime(time.longValue) } }
+    Text(formattedTime)
+}
+
 @OptIn(UnstableApi::class)
 @Composable
 fun MainScreenContent(
-    time: Long,
+    time: LongState,
     nowPlaying: NowPlayingData?,
     currentProgram: Program?,
     loading: Boolean,
@@ -152,7 +161,7 @@ fun MainScreenContent(
                 modifier = Modifier.padding(vertical = 20.dp)
             ) {
                 PlayPauseButton(playPauseButtonState)
-                Text(formatTime(time))
+                PlayTimeText(time)
 
                 Button(onClick = onSeekToLiveClick) {
                     Text("Hyppää liveen")
@@ -264,15 +273,21 @@ fun MainScreen(stream: StreamDetails, player: Player, modifier: Modifier = Modif
         player.prepare()
     }
 
-    val timeFlow = remember(player) { player.getTimeFlow() }
-    val time by timeFlow.collectAsStateWithLifecycle(0)
+    val timeState = remember { mutableLongStateOf(0) }
+    LaunchedEffect(player) {
+        while (true) {
+            timeState.longValue = player.currentPosition
+            delay(1000)
+        }
+    }
+
     val nowPlaying by nowPlayingClient.nowPlayingFlow.collectAsStateWithLifecycle(null)
     val currentProgram by currentProgramClient.programFlow.collectAsStateWithLifecycle(null)
     val loadingState = rememberPlayerLoadingState(player)
     val playPauseButtonState = rememberPlayPauseButtonState(player)
 
     MainScreenContent(
-        time = time,
+        time = timeState,
         nowPlaying = nowPlaying,
         currentProgram = currentProgram,
         loading = loadingState.loading,
@@ -310,7 +325,7 @@ fun MainScreenPreview() {
             modifier = Modifier.fillMaxSize(), shape = RectangleShape
         ) {
             MainScreenContent(
-                time = 0L,
+                time = mutableLongStateOf(0),
                 nowPlaying = NowPlayingData("Preview Song"),
                 currentProgram = prog,
                 loading = true,
@@ -319,14 +334,6 @@ fun MainScreenPreview() {
                 modifier = Modifier.fillMaxSize()
             )
         }
-    }
-}
-
-
-fun Player.getTimeFlow() = flow {
-    while (true) {
-        delay(1000)
-        emit(currentPosition)
     }
 }
 
