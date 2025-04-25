@@ -53,7 +53,7 @@ class ProgramClient(clock: Clock = Clock.System) {
         }
     }
 
-    suspend fun getFullProgram(): List<Program>? {
+    private suspend fun getFullProgram(): List<Program>? {
         if (cachedProgramEntries != null) return cachedProgramEntries
 
         Log.d(TAG, "getFullProgram: refreshing data")

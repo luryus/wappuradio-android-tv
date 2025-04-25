@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +62,6 @@ import com.skydoves.landscapist.coil.CoilImage
 import com.skydoves.landscapist.components.rememberImageComponent
 import com.skydoves.landscapist.transformation.blur.BlurTransformationPlugin
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
@@ -74,8 +72,8 @@ private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
 
-    lateinit var player: Player
-    lateinit var session: MediaSession
+    private lateinit var player: Player
+    private lateinit var session: MediaSession
 
     override fun onDestroy() {
         super.onDestroy()
@@ -325,7 +323,7 @@ fun MainScreenPreview() {
             modifier = Modifier.fillMaxSize(), shape = RectangleShape
         ) {
             MainScreenContent(
-                time = mutableLongStateOf(0),
+                time = remember { mutableLongStateOf(0) },
                 nowPlaying = NowPlayingData("Preview Song"),
                 currentProgram = prog,
                 loading = true,

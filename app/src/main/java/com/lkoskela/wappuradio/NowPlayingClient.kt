@@ -26,7 +26,7 @@ private const val TAG = "NowPlayingClient"
 class NowPlayingClient {
 
     @OptIn(ExperimentalSerializationApi::class)
-    protected val client: HttpClient = HttpClient(getDefaultHttpClientEngine()) {
+    private val client: HttpClient = HttpClient(getDefaultHttpClientEngine()) {
         install(ContentNegotiation) {
             json(Json {
                 namingStrategy = JsonNamingStrategy.SnakeCase
@@ -36,7 +36,7 @@ class NowPlayingClient {
         }
     }
 
-    suspend fun getNowPlaying(): NowPlayingData? {
+    private suspend fun getNowPlaying(): NowPlayingData? {
 
         Log.d(TAG, "getNowPlaying")
         
