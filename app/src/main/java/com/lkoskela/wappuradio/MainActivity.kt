@@ -22,6 +22,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.LongState
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -124,6 +126,7 @@ fun MainScreenContent(
     time: LongState,
     nowPlaying: NowPlayingData?,
     currentProgram: Program?,
+    playerErrorState: State<String?>,
     loading: Boolean,
     playPauseButtonState: PlayPauseButtonState?,
     onSeekToLiveClick: () -> Unit,
@@ -168,6 +171,14 @@ fun MainScreenContent(
                 if (loading) {
                     CircularProgressIndicator()
                 }
+            }
+
+            playerErrorState.value?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
             }
 
             currentProgram?.let {
@@ -282,6 +293,7 @@ fun MainScreen(stream: StreamDetails, player: Player, modifier: Modifier = Modif
     val nowPlaying by nowPlayingClient.nowPlayingFlow.collectAsStateWithLifecycle(null)
     val currentProgram by currentProgramClient.programFlow.collectAsStateWithLifecycle(null)
     val loadingState = rememberPlayerLoadingState(player)
+    val playerErrorState = rememberPlayerErrorState(player)
     val playPauseButtonState = rememberPlayPauseButtonState(player)
 
     MainScreenContent(
@@ -289,6 +301,7 @@ fun MainScreen(stream: StreamDetails, player: Player, modifier: Modifier = Modif
         nowPlaying = nowPlaying,
         currentProgram = currentProgram,
         loading = loadingState.loading,
+        playerErrorState = playerErrorState,
         playPauseButtonState = playPauseButtonState,
         onSeekToLiveClick = { player.seekToDefaultPosition(0) },
         modifier = modifier
@@ -326,6 +339,7 @@ fun MainScreenPreview() {
                 time = remember { mutableLongStateOf(0) },
                 nowPlaying = NowPlayingData("Preview Song"),
                 currentProgram = prog,
+                playerErrorState = remember { mutableStateOf(null) },
                 loading = true,
                 playPauseButtonState = null,
                 onSeekToLiveClick = {},
@@ -365,6 +379,19 @@ fun PlayPauseButton(state: PlayPauseButtonState?, modifier: Modifier = Modifier)
 fun rememberPlayerLoadingState(player: Player): PlayerLoadingState {
     val state = remember(player) { PlayerLoadingState(player) }
     LaunchedEffect(player) { state.observe() }
+    return state
+}
+
+@Composable
+fun rememberPlayerErrorState(player: Player): State<String?> {
+    val state: MutableState<String?> = remember(player) { mutableStateOf(null) }
+    LaunchedEffect(player) {
+        player.listen { evs ->
+            if (evs.containsAny(Player.EVENT_PLAYER_ERROR)) {
+                state.value = player.playerError?.let { "Virhe: " + it.localizedMessage }
+            }
+        }
+    }
     return state
 }
 

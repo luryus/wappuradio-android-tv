@@ -58,17 +58,24 @@ class ProgramClient(clock: Clock = Clock.System) {
 
         Log.d(TAG, "getFullProgram: refreshing data")
 
-        val res = client.get("https://wappuradio.fi/api/programs")
+        try {
+            val res = client.get("https://wappuradio.fi/api/programs")
 
-        if (!res.status.isSuccess()) {
-            Log.w(TAG, "getFullProgram: error fetching: ${res.status}")
+            if (!res.status.isSuccess()) {
+                Log.w(TAG, "getFullProgram: error fetching: ${res.status}")
+                return null
+            }
+
+            var data = res.body<List<Program>>()
+            data = data.sortedBy { it.start }
+            cachedProgramEntries = data
+            return data
+        }
+        catch (e: Exception) {
+            Log.w(TAG, "getFullProgram: error fetching", e)
+            cachedProgramEntries = null
             return null
         }
-
-        var data = res.body<List<Program>>()
-        data = data.sortedBy { it.start }
-        cachedProgramEntries = data
-        return data
     }
 
     val programFlow by lazy {

@@ -39,16 +39,20 @@ class NowPlayingClient {
     private suspend fun getNowPlaying(): NowPlayingData? {
 
         Log.d(TAG, "getNowPlaying")
-        
-        val res = client.get("https://wappuradio.fi/api/nowplaying")
-        
 
-        if (!res.status.isSuccess()) {
-            Log.w(TAG, "getNowPlaying: error fetching: ${res.status}")
+        try {
+            val res = client.get("https://wappuradio.fi/api/nowplaying")
+
+            if (!res.status.isSuccess()) {
+                Log.w(TAG, "getNowPlaying: error fetching: ${res.status}")
+                return null
+            }
+
+            return res.body<NowPlayingData>()
+        } catch (ex: Exception) {
+            Log.e(TAG, "getNowPlaying: error fetching data", ex)
             return null
         }
-
-        return res.body<NowPlayingData>()
     }
 
     val nowPlayingFlow: Flow<NowPlayingData?> = getNowPlayingFlow(20_000)
